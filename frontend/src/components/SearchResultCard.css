@@ -1,0 +1,91 @@
+.result-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: border-color 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+.result-card:hover {
+  border-color: #646cff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Context lines — visually subdued */
+.context-lines {
+  opacity: 0.55;
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.context-line {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.context-before {
+  margin-bottom: 0.5rem;
+  border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.context-after {
+  margin-top: 0.5rem;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-top: 0.5rem;
+}
+
+/* Matching chunk — highlighted */
+.match-chunk {
+  background-color: rgba(100, 108, 255, 0.12);
+  border-left: 3px solid #646cff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 4px;
+}
+
+.match-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Metadata rows */
+.result-meta,
+.result-meta-secondary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8rem;
+  color: #aaa;
+}
+
+.result-meta {
+  margin-top: 1rem;
+}
+
+.result-meta-secondary {
+  margin-top: 0.25rem;
+}
+
+.meta-podcast {
+  font-weight: 600;
+  color: #ccc;
+}
+
+.meta-separator {
+  color: #555;
+}
+
+.meta-speaker {
+  font-weight: 500;
+}
+
+.meta-timestamp {
+  font-variant-numeric: tabular-nums;
+}
