@@ -1,0 +1,4 @@
+poetry run python -m app.ingestion.ingest_transcript 4d829631-8a0c-4a2d-b8f7-a86f8bf955a7 tests/ingestion/932._Real_Talk__The_Illusion_of_Permission__Nobody_._fd90f097cb81_.txt
+
+DELETE FROM transcript_chunks
+WHERE episode_id = '4d829631-8a0c-4a2d-b8f7-a86f8bf955a7';
