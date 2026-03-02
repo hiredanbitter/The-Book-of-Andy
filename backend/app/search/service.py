@@ -58,7 +58,12 @@ def _embed_query(query: str) -> list[float]:
         If the OpenAI API call fails.
     """
     client = _get_openai_client()
-    response = client.embeddings.create(input=[query], model=EMBEDDING_MODEL)
+    try:
+        response = client.embeddings.create(input=[query], model=EMBEDDING_MODEL)
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to embed query via OpenAI: {exc}"
+        ) from exc
     return response.data[0].embedding
 
 
