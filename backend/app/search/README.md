@@ -61,12 +61,12 @@ Performs semantic search by embedding the user's query via the OpenAI Embeddings
 | Param | Type | Default | Description |
 |---|---|---|---|
 | `q` | string | *(required)* | Natural-language search term(s) |
-| `page` | int | 1 | Page number (1-based) |
-| `page_size` | int | 10 | Results per page (max 100) |
+
+Pagination is not supported — the endpoint always returns up to 30 results (hard limit).
 
 **Response Shape**
 
-Same as keyword search (see above).
+Same as keyword search (see above), with `page` always `1` and `page_size` always `30`.
 
 **Error Responses**
 
@@ -77,7 +77,7 @@ Same as keyword search (see above).
 ## Implementation Notes
 
 - **Full-text search** is handled by a PostgreSQL function (`keyword_search`) called via Supabase RPC. The function performs the text search, joins with `episodes` and `podcasts` for metadata, and returns paginated results with a total count — all in a single database round-trip.
-- **Semantic search** embeds the query using the OpenAI Embeddings API (`text-embedding-3-small`) and calls a PostgreSQL function (`semantic_search`) via Supabase RPC that uses pgvector cosine similarity (`<=>` operator) to find the closest matching chunks. If the OpenAI API is unavailable, the endpoint returns a 503.
+- **Semantic search** embeds the query using the OpenAI Embeddings API (`text-embedding-3-small`) and calls a PostgreSQL function (`semantic_search`) via Supabase RPC that uses pgvector cosine similarity (`<=>` operator) to find the closest matching chunks. Results are hard-limited to 30 (no pagination). If the OpenAI API is unavailable, the endpoint returns a 503.
 - **Context chunks** (2 before, 2 after the matching chunk by `chunk_index` within the same episode) are fetched in a separate batch query per episode to keep the RPC functions simple.
 - The SQL migration for the `keyword_search` function lives at `backend/migrations/001_keyword_search_function.sql`.
 - The SQL migration for the `semantic_search` function lives at `backend/migrations/002_semantic_search_function.sql`.
