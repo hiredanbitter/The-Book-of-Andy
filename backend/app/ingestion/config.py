@@ -4,8 +4,8 @@ Chunking parameters are defined here so they can be tuned without
 modifying the pipeline logic.
 """
 
-# Number of transcript lines per chunk (default: 8)
-DEFAULT_CHUNK_SIZE: int = 8
+# Number of transcript lines per chunk (default: 1)
+DEFAULT_CHUNK_SIZE: int = 1
 
 # OpenAI embedding model to use
 EMBEDDING_MODEL: str = "text-embedding-3-small"

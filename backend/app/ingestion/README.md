@@ -98,7 +98,7 @@ The parser expects plain-text files with lines in this format:
 
 Lines are grouped into non-overlapping chunks of fixed size:
 
-- **Default chunk size**: 8 lines per chunk
+- **Default chunk size**: 1 line per chunk
 - Each line appears in exactly one chunk, with no lines shared between consecutive chunks
 - The chunk size is configurable via a CLI flag or by modifying `config.py`
 
