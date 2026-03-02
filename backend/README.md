@@ -55,6 +55,20 @@ poetry run python -m app.ingestion.ingest_transcript <episode_id> <transcript_fi
 
 Required environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`.
 
+## Linting
+
+This project uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+
+```bash
+# Check for violations (auto-fix enabled)
+poetry run ruff check . --fix
+
+# Format code
+poetry run ruff format .
+```
+
+Ruff is configured in `pyproject.toml` under `[tool.ruff]`.
+
 ## Implementation Decisions
 
 - **FastAPI** was chosen for its async support, automatic OpenAPI docs, and strong typing with Pydantic.

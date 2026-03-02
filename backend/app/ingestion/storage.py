@@ -92,7 +92,7 @@ def store_chunks(
             "embedding": embedding,
             "chunk_index": chunk.chunk_index,
         }
-        for chunk, embedding in zip(chunks, embeddings)
+        for chunk, embedding in zip(chunks, embeddings, strict=True)
     ]
 
     try:

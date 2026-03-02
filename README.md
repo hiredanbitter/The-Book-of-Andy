@@ -78,6 +78,34 @@ Google OAuth is configured through the Supabase Auth dashboard. To enable it:
 2. Add the client ID and secret to the Supabase Auth settings under **Providers > Google**
 3. Set the redirect URL to your Supabase project's auth callback URL
 
+## Linting
+
+This project uses [Ruff](https://docs.astral.sh/ruff/) for the Python backend and [ESLint](https://eslint.org/) for the TypeScript frontend.
+
+### Running linters manually
+
+```bash
+# Backend (from the backend/ directory)
+poetry run ruff check . --fix
+
+# Frontend (from the frontend/ directory)
+npm run lint
+```
+
+### Pre-commit hook
+
+A [pre-commit](https://pre-commit.com/) configuration is included so that both linters run automatically on every commit.
+
+```bash
+# Install the pre-commit framework (one-time)
+pip install pre-commit
+
+# Install the git hook (run from the repo root)
+pre-commit install
+```
+
+Once installed, Ruff and ESLint will run against staged files each time you `git commit`. They will auto-fix what they can; if unfixable violations remain the commit will be blocked.
+
 ## Architecture
 
 See [ARCHITECTURE.md](./ARCHITECTURE.md) for a full description of the system components, data flow, and how services connect.

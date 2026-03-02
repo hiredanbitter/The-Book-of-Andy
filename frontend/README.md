@@ -36,6 +36,15 @@ Runs on [http://localhost:5173](http://localhost:5173) by default.
 - `npm run preview` — Preview the production build locally
 - `npm run lint` — Run ESLint
 
+## Linting
+
+ESLint is configured in `eslint.config.js`.
+
+```bash
+# Run ESLint
+npm run lint
+```
+
 ## Implementation Decisions
 
 - **Vite** was chosen over Create React App for faster builds and better developer experience.

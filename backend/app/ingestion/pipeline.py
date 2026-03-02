@@ -62,7 +62,11 @@ def run_pipeline(
         return 0
 
     # Step 2 — Chunk
-    logger.info("Step 2/4: Building chunks (size=%d, overlap=%d)", chunk_size, chunk_overlap)
+    logger.info(
+        "Step 2/4: Building chunks (size=%d, overlap=%d)",
+        chunk_size,
+        chunk_overlap,
+    )
     chunks: list[TranscriptChunk] = build_chunks(
         lines, chunk_size=chunk_size, chunk_overlap=chunk_overlap
     )

@@ -2,7 +2,9 @@
 """CLI script for ingesting a transcript into the database.
 
 Usage:
-    poetry run python -m app.ingestion.ingest_transcript <episode_id> <transcript_file_path> [--chunk-size N] [--chunk-overlap N]
+    poetry run python -m app.ingestion.ingest_transcript
+        <episode_id> <transcript_file_path>
+        [--chunk-size N] [--chunk-overlap N]
 
 Arguments:
     episode_id           UUID of the episode in the episodes table.
@@ -53,7 +55,10 @@ def main() -> None:
         "--chunk-overlap",
         type=int,
         default=DEFAULT_CHUNK_OVERLAP,
-        help=f"Number of overlapping lines between chunks (default: {DEFAULT_CHUNK_OVERLAP}).",
+        help=(
+            "Number of overlapping lines between chunks"
+            f" (default: {DEFAULT_CHUNK_OVERLAP})."
+        ),
     )
 
     args = parser.parse_args()

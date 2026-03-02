@@ -64,7 +64,7 @@ def parse_transcript(file_path: str) -> list[TranscriptLine]:
     skipped with a warning log message.
     """
     lines: list[TranscriptLine] = []
-    with open(file_path, "r", encoding="utf-8") as fh:
+    with open(file_path, encoding="utf-8") as fh:
         for line_number, raw_line in enumerate(fh, start=1):
             raw_line = raw_line.strip()
             if not raw_line:

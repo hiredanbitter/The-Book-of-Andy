@@ -57,9 +57,8 @@ def build_chunks(
 
     step = chunk_size - chunk_overlap
     chunks: list[TranscriptChunk] = []
-    chunk_index = 0
 
-    for start in range(0, len(lines), step):
+    for chunk_index, start in enumerate(range(0, len(lines), step)):
         window = lines[start : start + chunk_size]
         if not window:
             break
@@ -80,7 +79,6 @@ def build_chunks(
                 chunk_index=chunk_index,
             )
         )
-        chunk_index += 1
 
         # If the window already reached the end, stop
         if start + chunk_size >= len(lines):
