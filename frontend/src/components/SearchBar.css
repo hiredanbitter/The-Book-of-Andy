@@ -1,0 +1,98 @@
+.search-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.search-input-wrapper {
+  display: flex;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  transition: border-color 0.2s;
+}
+
+.search-input-wrapper:focus-within {
+  border-color: #646cff;
+}
+
+.search-input {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  font-size: 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  color: inherit;
+  border: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.search-input::placeholder {
+  color: #888;
+}
+
+.search-input:disabled {
+  opacity: 0.6;
+}
+
+.search-submit {
+  padding: 0.75rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  background-color: #646cff;
+  color: #fff;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+}
+
+.search-submit:hover:not(:disabled) {
+  background-color: #535bf2;
+}
+
+.search-submit:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Toggle */
+.search-toggle {
+  display: flex;
+  gap: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.toggle-button {
+  padding: 0.4rem 1.2rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background: transparent;
+  color: #aaa;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.toggle-button:not(:last-child) {
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.toggle-button.active {
+  background-color: #646cff;
+  color: #fff;
+}
+
+.toggle-button:hover:not(.active) {
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #ddd;
+}

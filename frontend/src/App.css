@@ -8,18 +8,3 @@ main {
   margin: 0 auto;
   padding: 2rem;
 }
-
-.home-page {
-  text-align: center;
-  padding-top: 4rem;
-}
-
-.home-page h1 {
-  font-size: 2.4rem;
-  margin-bottom: 0.5rem;
-}
-
-.home-page p {
-  color: #888;
-  font-size: 1.1rem;
-}
