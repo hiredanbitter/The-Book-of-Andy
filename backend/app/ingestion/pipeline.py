@@ -10,7 +10,7 @@ from app.ingestion.chunker import TranscriptChunk, build_chunks
 from app.ingestion.config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE
 from app.ingestion.embeddings import generate_embeddings
 from app.ingestion.parser import parse_transcript
-from app.ingestion.storage import store_chunks
+from app.ingestion.storage import store_chunks, verify_episode_exists
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,15 @@ def run_pipeline(
     int
         Number of chunks successfully stored.
     """
+    # Step 0 — Validate episode exists
+    logger.info("Step 0: Verifying episode %s exists in the database", episode_id)
+    if not verify_episode_exists(episode_id):
+        raise ValueError(
+            f"Episode with ID '{episode_id}' does not exist in the database. "
+            "Create the episode first using: "
+            "poetry run python -m app.ingestion.create_episode"
+        )
+
     # Step 1 — Parse
     logger.info("Step 1/4: Parsing transcript from %s", transcript_path)
     lines = parse_transcript(transcript_path)

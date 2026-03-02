@@ -26,6 +26,29 @@ def get_supabase_client() -> Client:
     return create_client(url, key)
 
 
+def verify_episode_exists(episode_id: str) -> bool:
+    """Check whether an episode with the given ID exists in the database.
+
+    Parameters
+    ----------
+    episode_id:
+        UUID of the episode to check.
+
+    Returns
+    -------
+    bool
+        ``True`` if the episode exists, ``False`` otherwise.
+    """
+    client = get_supabase_client()
+    result = (
+        client.table("episodes")
+        .select("id")
+        .eq("id", episode_id)
+        .execute()
+    )
+    return bool(result.data)
+
+
 def store_chunks(
     episode_id: str,
     chunks: list[TranscriptChunk],
