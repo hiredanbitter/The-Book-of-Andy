@@ -255,15 +255,18 @@ def _fetch_context_chunks(
     return result_map
 
 
+SEMANTIC_SEARCH_LIMIT: int = 30
+"""Maximum number of results returned by semantic search."""
+
+
 def semantic_search(
     query: str,
-    page: int = 1,
-    page_size: int = 10,
 ) -> SearchResponse:
     """Perform semantic search against transcript chunks.
 
     Embeds the user's query using the OpenAI Embeddings API and finds
     the most similar chunk vectors via pgvector cosine similarity.
+    Returns up to ``SEMANTIC_SEARCH_LIMIT`` (30) results — no pagination.
     For each matching chunk the 2 preceding and 2 following chunks
     (by ``chunk_index`` within the same episode) are returned as context.
 
@@ -271,15 +274,11 @@ def semantic_search(
     ----------
     query:
         The user's natural-language search terms.
-    page:
-        1-based page number.
-    page_size:
-        Number of results per page.
 
     Returns
     -------
     SearchResponse
-        Paginated results with total count.
+        Results with total count (page fixed to 1).
 
     Raises
     ------
@@ -287,28 +286,32 @@ def semantic_search(
         If the OpenAI Embeddings API call fails.
     """
     if not query or not query.strip():
-        return SearchResponse(results=[], total=0, page=page, page_size=page_size)
+        return SearchResponse(
+            results=[], total=0, page=1, page_size=SEMANTIC_SEARCH_LIMIT
+        )
 
     # Embed the query
     query_embedding = _embed_query(query.strip())
 
     client = _get_supabase_client()
-    offset = (page - 1) * page_size
 
     # Use Supabase RPC to call the semantic_search database function.
+    # No pagination — return up to SEMANTIC_SEARCH_LIMIT results.
     result = client.rpc(
         "semantic_search",
         {
             "query_embedding": query_embedding,
-            "result_limit": page_size,
-            "result_offset": offset,
+            "result_limit": SEMANTIC_SEARCH_LIMIT,
+            "result_offset": 0,
         },
     ).execute()
 
     rows = result.data or []
 
     if not rows:
-        return SearchResponse(results=[], total=0, page=page, page_size=page_size)
+        return SearchResponse(
+            results=[], total=0, page=1, page_size=SEMANTIC_SEARCH_LIMIT
+        )
 
     total = rows[0].get("total_count", 0) if rows else 0
 
@@ -349,6 +352,6 @@ def semantic_search(
     return SearchResponse(
         results=results,
         total=total,
-        page=page,
-        page_size=page_size,
+        page=1,
+        page_size=SEMANTIC_SEARCH_LIMIT,
     )

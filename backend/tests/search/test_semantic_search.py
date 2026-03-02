@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.search.service import _embed_query, semantic_search
+from app.search.service import SEMANTIC_SEARCH_LIMIT, _embed_query, semantic_search
 
 client = TestClient(app)
 
@@ -34,8 +34,8 @@ class TestEmbedQuery:
         mock_client.embeddings.create.assert_called_once()
 
     @patch("app.search.service._get_openai_client")
-    def test_raises_on_api_failure(self, mock_get_client):
-        """Should propagate exceptions from the OpenAI API."""
+    def test_raises_runtime_error_on_api_failure(self, mock_get_client):
+        """Should wrap OpenAI exceptions in RuntimeError."""
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
         mock_client.embeddings.create.side_effect = Exception("API down")
@@ -43,10 +43,10 @@ class TestEmbedQuery:
         raised = False
         try:
             _embed_query("test query")
-        except Exception as e:
+        except RuntimeError as e:
             raised = True
             assert "API down" in str(e)
-        assert raised, "Expected an exception to be raised"
+        assert raised, "Expected a RuntimeError to be raised"
 
 
 # ---------------------------------------------------------------------------
@@ -59,9 +59,11 @@ class TestSemanticSearchService:
     @patch("app.search.service._embed_query")
     def test_empty_query_returns_empty(self, mock_embed, mock_get_client):
         """Empty query should return empty results without calling APIs."""
-        result = semantic_search(query="", page=1, page_size=10)
+        result = semantic_search(query="")
         assert result.results == []
         assert result.total == 0
+        assert result.page == 1
+        assert result.page_size == SEMANTIC_SEARCH_LIMIT
         mock_embed.assert_not_called()
         mock_get_client.assert_not_called()
 
@@ -69,7 +71,7 @@ class TestSemanticSearchService:
     @patch("app.search.service._embed_query")
     def test_whitespace_query_returns_empty(self, mock_embed, mock_get_client):
         """Whitespace-only query should return empty results."""
-        result = semantic_search(query="   ", page=1, page_size=10)
+        result = semantic_search(query="   ")
         assert result.results == []
         assert result.total == 0
         mock_embed.assert_not_called()
@@ -86,7 +88,7 @@ class TestSemanticSearchService:
         mock_rpc.execute.return_value = MagicMock(data=[])
         mock_client.rpc.return_value = mock_rpc
 
-        result = semantic_search(query="nonexistent", page=1, page_size=10)
+        result = semantic_search(query="nonexistent")
         assert result.results == []
         assert result.total == 0
 
@@ -128,8 +130,10 @@ class TestSemanticSearchService:
         mock_client.table.return_value = mock_select
         mock_select.select.return_value = mock_select
 
-        result = semantic_search(query="burnout", page=1, page_size=10)
+        result = semantic_search(query="burnout")
         assert result.total == 1
+        assert result.page == 1
+        assert result.page_size == SEMANTIC_SEARCH_LIMIT
         assert len(result.results) == 1
         r = result.results[0]
         assert r.chunk_id == "abc-123"
@@ -139,10 +143,10 @@ class TestSemanticSearchService:
 
     @patch("app.search.service._get_supabase_client")
     @patch("app.search.service._embed_query")
-    def test_pagination_offset_calculated_correctly(
+    def test_rpc_called_with_limit_30_offset_0(
         self, mock_embed, mock_get_client
     ):
-        """Verify the RPC is called with the correct offset."""
+        """Verify the RPC is called with limit=30 and offset=0 (no pagination)."""
         mock_embed.return_value = [0.1] * 1536
         mock_client = MagicMock()
         mock_get_client.return_value = mock_client
@@ -151,14 +155,14 @@ class TestSemanticSearchService:
         mock_rpc.execute.return_value = MagicMock(data=[])
         mock_client.rpc.return_value = mock_rpc
 
-        semantic_search(query="test", page=3, page_size=5)
+        semantic_search(query="test")
 
         mock_client.rpc.assert_called_once_with(
             "semantic_search",
             {
                 "query_embedding": [0.1] * 1536,
-                "result_limit": 5,
-                "result_offset": 10,  # (3-1) * 5
+                "result_limit": SEMANTIC_SEARCH_LIMIT,
+                "result_offset": 0,
             },
         )
 
@@ -187,7 +191,7 @@ class TestSemanticSearchEndpoint:
         from app.search.schemas import SearchResponse
 
         mock_search.return_value = SearchResponse(
-            results=[], total=0, page=1, page_size=10
+            results=[], total=0, page=1, page_size=30
         )
 
         response = client.get("/search/semantic?q=nonexistent")
@@ -196,7 +200,7 @@ class TestSemanticSearchEndpoint:
         assert data["results"] == []
         assert data["total"] == 0
         assert data["page"] == 1
-        assert data["page_size"] == 10
+        assert data["page_size"] == 30
 
     @patch("app.search.router.semantic_search")
     def test_search_returns_results_with_metadata(self, mock_search):
@@ -223,7 +227,7 @@ class TestSemanticSearchEndpoint:
             ],
             total=1,
             page=1,
-            page_size=10,
+            page_size=30,
         )
 
         response = client.get("/search/semantic?q=burnout")
@@ -252,20 +256,20 @@ class TestSemanticSearchEndpoint:
         assert "detail" in data
         assert "temporarily unavailable" in data["detail"]
 
-    def test_page_must_be_positive(self):
-        """Page parameter must be >= 1."""
-        response = client.get("/search/semantic?q=test&page=0")
-        assert response.status_code == 422
+    @patch("app.search.router.semantic_search")
+    def test_endpoint_only_accepts_q_param(self, mock_search):
+        """page and page_size params are ignored (not declared on endpoint)."""
+        from app.search.schemas import SearchResponse
 
-    def test_page_size_must_be_positive(self):
-        """Page size must be >= 1."""
-        response = client.get("/search/semantic?q=test&page_size=0")
-        assert response.status_code == 422
+        mock_search.return_value = SearchResponse(
+            results=[], total=0, page=1, page_size=30
+        )
 
-    def test_page_size_max_100(self):
-        """Page size must be <= 100."""
-        response = client.get("/search/semantic?q=test&page_size=101")
-        assert response.status_code == 422
+        # Extra query params are silently ignored by FastAPI
+        response = client.get("/search/semantic?q=test&page=2&page_size=5")
+        assert response.status_code == 200
+        # The service was called with only q (no page/page_size)
+        mock_search.assert_called_once_with(query="test")
 
     @patch("app.search.router.semantic_search")
     def test_search_with_context_chunks(self, mock_search):
@@ -326,7 +330,7 @@ class TestSemanticSearchEndpoint:
             ],
             total=1,
             page=1,
-            page_size=10,
+            page_size=30,
         )
 
         response = client.get("/search/semantic?q=burnout")
