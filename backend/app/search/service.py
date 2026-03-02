@@ -27,16 +27,13 @@ def _get_supabase_client() -> Client:
     return create_client(url, key)
 
 
-def _build_tsquery(query: str) -> str:
-    """Convert a user query string into a PostgreSQL tsquery expression.
+def _sanitize_query(query: str) -> str:
+    """Sanitize the user query string for use with ``plainto_tsquery``.
 
-    Splits on whitespace and joins with ``&`` (AND) so that all terms
-    must be present in the matching chunk text.
+    Strips leading/trailing whitespace. ``plainto_tsquery`` handles
+    raw user input safely — no special formatting is needed.
     """
-    terms = query.strip().split()
-    if not terms:
-        return ""
-    return " & ".join(terms)
+    return query.strip()
 
 
 def keyword_search(
@@ -69,8 +66,8 @@ def keyword_search(
         return SearchResponse(results=[], total=0, page=page, page_size=page_size)
 
     client = _get_supabase_client()
-    tsquery = _build_tsquery(query)
-    if not tsquery:
+    sanitized = _sanitize_query(query)
+    if not sanitized:
         return SearchResponse(results=[], total=0, page=page, page_size=page_size)
 
     offset = (page - 1) * page_size
@@ -81,7 +78,7 @@ def keyword_search(
     result = client.rpc(
         "keyword_search",
         {
-            "search_query": tsquery,
+            "search_query": sanitized,
             "result_limit": page_size,
             "result_offset": offset,
         },

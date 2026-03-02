@@ -43,8 +43,8 @@ BEGIN
         FROM transcript_chunks tc
         JOIN episodes e ON tc.episode_id = e.id
         JOIN podcasts p ON e.podcast_id = p.id
-        WHERE to_tsvector('english', tc.chunk_text) @@ to_tsquery('english', search_query)
-        ORDER BY ts_rank(to_tsvector('english', tc.chunk_text), to_tsquery('english', search_query)) DESC
+        WHERE to_tsvector('english', tc.chunk_text) @@ plainto_tsquery('english', search_query)
+        ORDER BY ts_rank(to_tsvector('english', tc.chunk_text), plainto_tsquery('english', search_query)) DESC
         LIMIT result_limit
         OFFSET result_offset
     )

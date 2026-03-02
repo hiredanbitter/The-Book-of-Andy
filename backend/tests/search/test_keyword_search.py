@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.search.service import _build_tsquery, _fetch_context_chunks
+from app.search.service import _fetch_context_chunks, _sanitize_query
 
 client = TestClient(app)
 
@@ -15,21 +15,25 @@ client = TestClient(app)
 # ---------------------------------------------------------------------------
 
 
-class TestBuildTsquery:
+class TestSanitizeQuery:
     def test_single_term(self):
-        assert _build_tsquery("burnout") == "burnout"
+        assert _sanitize_query("burnout") == "burnout"
 
-    def test_multiple_terms(self):
-        assert _build_tsquery("work life balance") == "work & life & balance"
+    def test_multiple_terms_preserved(self):
+        assert _sanitize_query("work life balance") == "work life balance"
 
     def test_strips_whitespace(self):
-        assert _build_tsquery("  hello  world  ") == "hello & world"
+        assert _sanitize_query("  hello world  ") == "hello world"
 
     def test_empty_string(self):
-        assert _build_tsquery("") == ""
+        assert _sanitize_query("") == ""
 
     def test_whitespace_only(self):
-        assert _build_tsquery("   ") == ""
+        assert _sanitize_query("   ") == ""
+
+    def test_special_chars_preserved(self):
+        """plainto_tsquery handles special chars safely."""
+        assert _sanitize_query("work-life balance!") == "work-life balance!"
 
 
 # ---------------------------------------------------------------------------
@@ -224,7 +228,7 @@ class TestKeywordSearchEndpoint:
         mock_client.rpc.assert_called_once_with(
             "keyword_search",
             {
-                "search_query": "test",
+                "search_query": "test",  # raw query, plainto_tsquery handles it
                 "result_limit": 5,
                 "result_offset": 10,  # (3-1) * 5
             },
