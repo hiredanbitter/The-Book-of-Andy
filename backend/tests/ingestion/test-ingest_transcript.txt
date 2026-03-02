@@ -2,3 +2,8 @@ poetry run python -m app.ingestion.ingest_transcript 4d829631-8a0c-4a2d-b8f7-a86
 
 DELETE FROM transcript_chunks
 WHERE episode_id = '4d829631-8a0c-4a2d-b8f7-a86f8bf955a7';
+
+# https://platform.openai.com/usage/embeddings?breakdownBy=model&interval=1d&metrics=input_tokens
+# text-embedding-3-small
+# 6.16K input tokens
+# $0.00 spend
