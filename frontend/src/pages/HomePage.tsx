@@ -63,13 +63,15 @@ export function HomePage() {
               <SearchResultCard key={result.chunk_id} result={result} />
             ))}
           </div>
-          <Pagination
-            page={page}
-            totalPages={totalPages}
-            total={total}
-            loading={loading}
-            onPageChange={goToPage}
-          />
+          {mode === 'keyword' && (
+            <Pagination
+              page={page}
+              totalPages={totalPages}
+              total={total}
+              loading={loading}
+              onPageChange={goToPage}
+            />
+          )}
         </div>
       )}
 
