@@ -2,6 +2,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.bookmarks.router import router as bookmarks_router
 from app.episodes.router import router as episodes_router
 from app.search.router import router as search_router
 
@@ -23,6 +24,7 @@ app.add_middleware(
 )
 
 # Register routers
+app.include_router(bookmarks_router)
 app.include_router(episodes_router)
 app.include_router(search_router)
 
