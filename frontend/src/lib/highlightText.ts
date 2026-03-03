@@ -35,7 +35,7 @@ function simpleStem(word: string): string {
 
   // Order matters — try longest suffixes first
   const suffixes = [
-    'ingly', 'ingly', 'ation', 'ment', 'ness', 'ting',
+    'ingly', 'ation', 'ment', 'ness', 'ting',
     'able', 'ible', 'ally', 'ful', 'ous', 'ive', 'less',
     'ing', 'ied', 'ies', 'ely', 'ion',
     'ed', 'er', 'ly', 'es', 'en',
