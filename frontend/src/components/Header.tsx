@@ -17,6 +17,9 @@ export function Header() {
           <span className="auth-loading">Loading...</span>
         ) : user ? (
           <div className="user-menu">
+            <Link to="/bookmarks" className="header-bookmarks-link">
+              Bookmarks
+            </Link>
             <span className="user-name">
               {user.user_metadata?.full_name ?? user.email ?? 'User'}
             </span>

@@ -5,7 +5,7 @@ API client modules for communicating with the FastAPI backend.
 ## Key Files
 
 - **`searchApi.ts`** — Client for `GET /search/keyword` and `GET /search/semantic` endpoints. Returns typed `SearchResponse` objects.
-- **`bookmarksApi.ts`** — Client for bookmark endpoints (`GET /bookmarks`, `POST /bookmarks`). All calls require a Supabase JWT access token passed in the `Authorization` header. Includes a custom `BookmarkLimitError` class thrown when the API returns a 400 status (user has reached the 100 bookmark cap).
+- **`bookmarksApi.ts`** — Client for bookmark endpoints (`GET /bookmarks`, `POST /bookmarks`, `DELETE /bookmarks/:id`). All calls require a Supabase JWT access token passed in the `Authorization` header. Includes a custom `BookmarkLimitError` class thrown when the API returns a 400 status (user has reached the 100 bookmark cap).
 
 ## Implementation Decisions
 

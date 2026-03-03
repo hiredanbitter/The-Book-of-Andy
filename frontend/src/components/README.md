@@ -8,7 +8,9 @@ Reusable UI components shared across pages.
 - **`SearchResultCard.css`** — Styles for the search result card including context lines, match highlighting, metadata rows, bookmark button, tooltip, spinner, and inline error message.
 - **`SearchBar.tsx`** — Search input with keyword/semantic mode toggle and submit button.
 - **`SearchBar.css`** — Styles for the search bar component.
-- **`Header.tsx`** — App header with logo link, auth status, and sign-in/sign-out button.
+- **`BookmarkCard.tsx`** — Renders a single bookmark as a card matching the search result card format, with a delete button (confirm/cancel) instead of a bookmark button. Links to the transcript detail page in a new tab.
+- **`BookmarkCard.css`** — Styles for the bookmark card including delete button, confirmation UI, spinner, and inline error message.
+- **`Header.tsx`** — App header with logo link, bookmarks link (for logged-in users), auth status, and sign-in/sign-out button.
 - **`Header.css`** — Styles for the app header.
 - **`Pagination.tsx`** — Page navigation controls for keyword search results.
 - **`Pagination.css`** — Styles for the pagination component.
@@ -21,3 +23,9 @@ Reusable UI components shared across pages.
 - **Tooltip for logged-out users**: Shown on hover via React state rather than CSS-only `:hover` to keep it conditional on auth state.
 - **Inline error message**: Displayed below the button when the bookmark limit (100) is reached, styled as a subtle red notification.
 - **Loading spinner**: A pure CSS spinner animation displayed while the `POST /bookmarks` API call is in flight.
+
+## Delete Button Implementation Decisions (BookmarkCard)
+
+- **Two-step confirmation**: Clicking the trash icon replaces it with "Delete" and "Cancel" buttons to prevent accidental deletions.
+- **Optimistic removal**: On successful deletion the card is removed from the parent's state immediately without a full page reload.
+- **Event propagation**: Like the bookmark button, the delete button calls `preventDefault()` and `stopPropagation()` to avoid triggering the card's link navigation.

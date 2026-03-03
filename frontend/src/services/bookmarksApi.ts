@@ -86,6 +86,29 @@ export async function createBookmark(
 }
 
 /**
+ * Delete a bookmark by its ID.
+ *
+ * @param accessToken - The Supabase JWT session token.
+ * @param bookmarkId - UUID of the bookmark to delete.
+ */
+export async function deleteBookmark(
+  accessToken: string,
+  bookmarkId: string,
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/bookmarks/${bookmarkId}`, {
+    method: 'DELETE',
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Failed to delete bookmark (${response.status}): ${body}`)
+  }
+}
+
+/**
  * Custom error class for when the bookmark limit is reached.
  */
 export class BookmarkLimitError extends Error {

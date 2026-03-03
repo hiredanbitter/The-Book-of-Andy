@@ -1,0 +1,128 @@
+.bookmark-card {
+  display: block;
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.25rem;
+  transition: border-color 0.2s, background-color 0.2s;
+  cursor: pointer;
+}
+
+.bookmark-card:hover {
+  border-color: #646cff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* ---- Delete button ---- */
+.delete-button-wrapper {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  z-index: 1;
+}
+
+.delete-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #888;
+  cursor: pointer;
+  transition: color 0.2s, background-color 0.2s;
+}
+
+.delete-button:hover {
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff6b6b;
+}
+
+.delete-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Confirm / cancel group */
+.delete-confirm-group {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.delete-confirm-button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 4px;
+  background: rgba(255, 107, 107, 0.12);
+  color: #ff6b6b;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-confirm-button:hover {
+  background: rgba(255, 107, 107, 0.22);
+}
+
+.delete-confirm-button.deleting {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.delete-cancel-button {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  color: #aaa;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-cancel-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ccc;
+}
+
+/* Spinner for deleting state */
+.delete-spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid rgba(255, 107, 107, 0.2);
+  border-top-color: #ff6b6b;
+  border-radius: 50%;
+  animation: delete-spin 0.6s linear infinite;
+}
+
+@keyframes delete-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Inline error message */
+.delete-error {
+  margin-top: 4px;
+  padding: 4px 8px;
+  font-size: 0.72rem;
+  color: #ff6b6b;
+  background: rgba(255, 107, 107, 0.08);
+  border: 1px solid rgba(255, 107, 107, 0.2);
+  border-radius: 4px;
+  white-space: nowrap;
+  max-width: 220px;
+  text-align: right;
+}

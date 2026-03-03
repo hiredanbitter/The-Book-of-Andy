@@ -8,6 +8,15 @@ React page components mapped to routes in `App.tsx`.
 - **`AuthCallback.tsx`** — Handles the OAuth redirect callback after Google sign-in. Mounted at `/auth/callback`.
 - **`TranscriptPage.tsx`** — Transcript detail page showing full episode transcript with metadata. Mounted at `/episodes/:episodeId/transcript`.
 - **`TranscriptPage.css`** — Styles for the transcript detail page including episode metadata, chunk rendering, highlight styling, and responsive breakpoints.
+- **`BookmarksPage.tsx`** — Bookmarks dashboard showing all saved bookmarks for authenticated users. Redirects to home if not logged in. Mounted at `/bookmarks`.
+- **`BookmarksPage.css`** — Styles for the bookmarks dashboard including empty state, bookmark list, and responsive breakpoints.
+
+## BookmarksPage Implementation Decisions
+
+- **Auth guard**: Uses `useEffect` to redirect unauthenticated users to the homepage. Renders nothing during the redirect to avoid a flash of content.
+- **Delete with confirmation**: Each bookmark card has a delete button that first asks for confirmation before calling `DELETE /bookmarks/:id`. On success the card is removed from state without a full page reload.
+- **Empty state**: When the user has no bookmarks, a friendly message is shown with a link to start searching.
+- **Header link**: A "Bookmarks" link is added to the app header for logged-in users, between the logo and user menu.
 
 ## TranscriptPage Implementation Decisions
 
