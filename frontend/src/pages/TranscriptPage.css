@@ -1,0 +1,175 @@
+/* Transcript Detail Page */
+
+.transcript-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Loading & Error States */
+.transcript-loading,
+.transcript-error {
+  text-align: center;
+  padding: 4rem 1rem;
+  font-size: 1.1rem;
+}
+
+.transcript-error {
+  color: #e57373;
+}
+
+/* Episode Metadata */
+.episode-metadata {
+  margin-bottom: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.episode-meta-label {
+  font-size: 0.875rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.episode-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0 0 0.75rem;
+}
+
+.episode-meta-details {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-bottom: 0.75rem;
+}
+
+.episode-number::after {
+  content: "\00b7";
+  margin-left: 1rem;
+}
+
+.episode-number:last-child::after {
+  content: "";
+  margin-left: 0;
+}
+
+.episode-description {
+  color: #bbb;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Transcript Body */
+.transcript-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.transcript-empty {
+  text-align: center;
+  color: #888;
+  padding: 3rem 1rem;
+  font-size: 1rem;
+}
+
+/* Individual Chunk */
+.transcript-chunk {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.transcript-chunk--highlighted {
+  background-color: rgba(255, 235, 59, 0.15);
+  border-left: 3px solid #ffeb3b;
+  padding-left: calc(1rem - 3px);
+}
+
+.chunk-header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.chunk-speaker {
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.chunk-timestamp {
+  font-size: 0.8rem;
+  color: #888;
+}
+
+.chunk-text {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+/* Light mode overrides */
+@media (prefers-color-scheme: light) {
+  .episode-metadata {
+    border-bottom-color: rgba(0, 0, 0, 0.1);
+  }
+
+  .episode-meta-label {
+    color: #666;
+  }
+
+  .episode-meta-details {
+    color: #666;
+  }
+
+  .episode-description {
+    color: #555;
+  }
+
+  .transcript-chunk--highlighted {
+    background-color: rgba(255, 235, 59, 0.3);
+    border-left-color: #fbc02d;
+  }
+
+  .chunk-timestamp {
+    color: #999;
+  }
+}
+
+/* Responsive — Mobile */
+@media (max-width: 640px) {
+  .transcript-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .episode-title {
+    font-size: 1.4rem;
+  }
+
+  .episode-meta-details {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .episode-number::after {
+    content: "";
+    margin-left: 0;
+  }
+
+  .transcript-chunk {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .chunk-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}

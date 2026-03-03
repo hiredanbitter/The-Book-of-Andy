@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext'
 import { Header } from './components/Header'
 import { AuthCallback } from './pages/AuthCallback'
 import { HomePage } from './pages/HomePage'
+import { TranscriptPage } from './pages/TranscriptPage'
 import './App.css'
 
 function App() {
@@ -14,6 +15,7 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/episodes/:episodeId/transcript" element={<TranscriptPage />} />
           </Routes>
         </main>
       </AuthProvider>
