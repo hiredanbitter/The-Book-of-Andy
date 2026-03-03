@@ -43,8 +43,17 @@ function formatDate(dateStr: string | null): string {
  * chunk highlighted.  The chunk_id is passed as a query parameter so the
  * transcript page can scroll to it on load.
  */
-function buildTranscriptUrl(result: SearchResult): string {
-  return `/episodes/${result.episode_id}/transcript?chunk=${result.chunk_id}`
+function buildTranscriptUrl(
+  result: SearchResult,
+  searchQuery: string,
+  searchMode: SearchMode,
+): string {
+  const params = new URLSearchParams({
+    chunk: result.chunk_id,
+    q: searchQuery,
+    mode: searchMode,
+  })
+  return `/episodes/${result.episode_id}/transcript?${params.toString()}`
 }
 
 /**
@@ -94,7 +103,7 @@ export function SearchResultCard({
   onRemoveBookmark,
   onBookmarkRemoved,
 }: SearchResultCardProps) {
-  const transcriptUrl = buildTranscriptUrl(result)
+  const transcriptUrl = buildTranscriptUrl(result, searchQuery, searchMode)
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)

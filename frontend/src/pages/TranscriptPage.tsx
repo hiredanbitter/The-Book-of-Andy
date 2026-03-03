@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useMemo, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { highlightSemanticMatches } from '../lib/highlightText'
 import './TranscriptPage.css'
 
 interface TranscriptChunk {
@@ -27,10 +28,47 @@ interface TranscriptResponse {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:8000'
 
+/**
+ * Renders chunk text with optional search term highlighting.
+ * On the transcript page we always use client-side highlighting
+ * since the transcript endpoint doesn't return ts_headline output.
+ */
+function ChunkText({
+  text,
+  searchQuery,
+  searchMode,
+}: {
+  text: string
+  searchQuery: string
+  searchMode: string
+}) {
+  const highlightedHtml = useMemo(() => {
+    if (!searchQuery) return null
+    // For both keyword and semantic, use client-side highlighting on the transcript page
+    if (searchMode === 'keyword' || searchMode === 'semantic') {
+      return highlightSemanticMatches(text, searchQuery)
+    }
+    return null
+  }, [text, searchQuery, searchMode])
+
+  if (highlightedHtml) {
+    return (
+      <div
+        className="chunk-text"
+        dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+      />
+    )
+  }
+
+  return <div className="chunk-text">{text}</div>
+}
+
 export function TranscriptPage() {
   const { episodeId } = useParams<{ episodeId: string }>()
   const [searchParams] = useSearchParams()
   const highlightChunkId = searchParams.get('chunk')
+  const searchQuery = searchParams.get('q') || ''
+  const searchMode = searchParams.get('mode') || ''
 
   const [data, setData] = useState<TranscriptResponse | null>(null)
   const [loading, setLoading] = useState(true)
@@ -161,7 +199,11 @@ export function TranscriptPage() {
                   <span className="chunk-speaker">{chunk.speaker_label}</span>
                   <span className="chunk-timestamp">{chunk.start_timestamp}</span>
                 </div>
-                <div className="chunk-text">{chunk.chunk_text}</div>
+                <ChunkText
+                  text={chunk.chunk_text}
+                  searchQuery={chunk.chunk_id === highlightChunkId ? searchQuery : ''}
+                  searchMode={searchMode}
+                />
               </div>
             )
           })
