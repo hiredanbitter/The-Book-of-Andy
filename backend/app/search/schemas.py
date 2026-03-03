@@ -18,6 +18,7 @@ class SearchResult(BaseModel):
 
     chunk_id: str
     chunk_text: str
+    highlighted_text: str | None = None
     speaker_label: str
     start_timestamp: str
     end_timestamp: str

@@ -55,6 +55,14 @@
   white-space: pre-wrap;
 }
 
+/* Highlighted search term matches within chunk text */
+.match-text mark {
+  background-color: rgba(255, 230, 0, 0.35);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0.05em 0.1em;
+}
+
 /* Metadata rows */
 .result-meta,
 .result-meta-secondary {

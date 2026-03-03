@@ -13,6 +13,7 @@ export interface ContextChunk {
 export interface SearchResult {
   chunk_id: string
   chunk_text: string
+  highlighted_text?: string | null
   speaker_label: string
   start_timestamp: string
   end_timestamp: string
