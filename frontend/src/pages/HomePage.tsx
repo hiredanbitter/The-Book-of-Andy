@@ -25,7 +25,7 @@ export function HomePage() {
     goToPage,
   } = useSearch()
 
-  const { user, signInWithGoogle } = useAuth()
+  const { user } = useAuth()
   const isLoggedIn = !!user
   const { bookmarkedChunkIds, saveBookmark, removeBookmark, undoRemoveBookmark } =
     useBookmarks()
@@ -94,7 +94,6 @@ export function HomePage() {
                 onBookmark={saveBookmark}
                 onRemoveBookmark={removeBookmark}
                 onBookmarkRemoved={handleBookmarkRemoved}
-                onSignInPrompt={signInWithGoogle}
               />
             ))}
           </div>

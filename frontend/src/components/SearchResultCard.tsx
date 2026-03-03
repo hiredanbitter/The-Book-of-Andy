@@ -14,8 +14,6 @@ interface SearchResultCardProps {
   onRemoveBookmark?: (chunkId: string) => Promise<{ success: boolean; error?: string }>
   /** Callback invoked when a bookmark is successfully removed (for toast/undo). */
   onBookmarkRemoved?: (chunkId: string) => void
-  /** Callback invoked when an unauthenticated user clicks the bookmark icon. */
-  onSignInPrompt?: () => void
 }
 
 /**
@@ -51,7 +49,6 @@ export function SearchResultCard({
   onBookmark,
   onRemoveBookmark,
   onBookmarkRemoved,
-  onSignInPrompt,
 }: SearchResultCardProps) {
   const transcriptUrl = buildTranscriptUrl(result)
   const [saving, setSaving] = useState(false)
@@ -65,10 +62,7 @@ export function SearchResultCard({
 
     if (saving) return
 
-    if (!isLoggedIn) {
-      onSignInPrompt?.()
-      return
-    }
+    if (!isLoggedIn) return
 
     if (isBookmarked && onRemoveBookmark) {
       // Remove bookmark
