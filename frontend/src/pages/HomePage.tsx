@@ -1,6 +1,8 @@
+import { useCallback, useState } from 'react'
 import { SearchBar } from '../components/SearchBar'
 import { SearchResultCard } from '../components/SearchResultCard'
 import { Pagination } from '../components/Pagination'
+import { Toast } from '../components/Toast'
 import { useSearch } from '../hooks/useSearch'
 import { useBookmarks } from '../hooks/useBookmarks'
 import { useAuth } from '../hooks/useAuth'
@@ -25,7 +27,25 @@ export function HomePage() {
 
   const { user } = useAuth()
   const isLoggedIn = !!user
-  const { bookmarkedChunkIds, saveBookmark } = useBookmarks()
+  const { bookmarkedChunkIds, saveBookmark, removeBookmark, undoRemoveBookmark } =
+    useBookmarks()
+
+  // Toast state for bookmark removal undo
+  const [toast, setToast] = useState<{ chunkId: string } | null>(null)
+
+  const handleBookmarkRemoved = useCallback((chunkId: string) => {
+    setToast({ chunkId })
+  }, [])
+
+  const handleUndoRemove = useCallback(() => {
+    if (toast) {
+      undoRemoveBookmark(toast.chunkId)
+    }
+  }, [toast, undoRemoveBookmark])
+
+  const handleToastDismiss = useCallback(() => {
+    setToast(null)
+  }, [])
 
   return (
     <div className={`home-page ${hasSearched ? 'has-results' : ''}`}>
@@ -72,6 +92,8 @@ export function HomePage() {
                 isLoggedIn={isLoggedIn}
                 isBookmarked={bookmarkedChunkIds.has(result.chunk_id)}
                 onBookmark={saveBookmark}
+                onRemoveBookmark={removeBookmark}
+                onBookmarkRemoved={handleBookmarkRemoved}
               />
             ))}
           </div>
@@ -94,6 +116,16 @@ export function HomePage() {
             No results found. Try a different search term or switch search modes.
           </p>
         </div>
+      )}
+
+      {/* Toast notification for bookmark removal with undo */}
+      {toast && (
+        <Toast
+          message="Bookmark removed"
+          actionLabel="Undo"
+          onAction={handleUndoRemove}
+          onDismiss={handleToastDismiss}
+        />
       )}
     </div>
   )

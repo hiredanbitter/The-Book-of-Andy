@@ -10,6 +10,10 @@ interface SearchResultCardProps {
   isBookmarked: boolean
   /** Callback to save a bookmark. Returns success/error info. */
   onBookmark: (chunkId: string) => Promise<{ success: boolean; error?: string }>
+  /** Callback to remove a bookmark. Returns success/error info. */
+  onRemoveBookmark?: (chunkId: string) => Promise<{ success: boolean; error?: string }>
+  /** Callback invoked when a bookmark is successfully removed (for toast/undo). */
+  onBookmarkRemoved?: (chunkId: string) => void
 }
 
 /**
@@ -43,35 +47,47 @@ export function SearchResultCard({
   isLoggedIn,
   isBookmarked,
   onBookmark,
+  onRemoveBookmark,
+  onBookmarkRemoved,
 }: SearchResultCardProps) {
   const transcriptUrl = buildTranscriptUrl(result)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(isBookmarked)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
-
-  // Sync saved state when isBookmarked prop changes (e.g. after initial fetch)
-  if (isBookmarked && !saved) {
-    setSaved(true)
-  }
 
   const handleBookmarkClick = async (e: React.MouseEvent) => {
     // Prevent the card link from navigating
     e.preventDefault()
     e.stopPropagation()
 
-    if (!isLoggedIn || saved || saving) return
+    if (saving) return
 
-    setSaving(true)
-    setErrorMsg(null)
+    if (!isLoggedIn) return
 
-    const bookmarkResult = await onBookmark(result.chunk_id)
+    if (isBookmarked && onRemoveBookmark) {
+      // Remove bookmark
+      setSaving(true)
+      setErrorMsg(null)
 
-    setSaving(false)
-    if (bookmarkResult.success) {
-      setSaved(true)
-    } else if (bookmarkResult.error) {
-      setErrorMsg(bookmarkResult.error)
+      const removeResult = await onRemoveBookmark(result.chunk_id)
+
+      setSaving(false)
+      if (removeResult.success) {
+        onBookmarkRemoved?.(result.chunk_id)
+      } else if (removeResult.error) {
+        setErrorMsg(removeResult.error)
+      }
+    } else if (!isBookmarked) {
+      // Create bookmark
+      setSaving(true)
+      setErrorMsg(null)
+
+      const bookmarkResult = await onBookmark(result.chunk_id)
+
+      setSaving(false)
+      if (!bookmarkResult.success && bookmarkResult.error) {
+        setErrorMsg(bookmarkResult.error)
+      }
     }
   }
 
@@ -87,16 +103,16 @@ export function SearchResultCard({
       <div className="bookmark-button-wrapper">
         <button
           type="button"
-          className={`bookmark-button ${saved ? 'bookmarked' : ''} ${saving ? 'saving' : ''}`}
+          className={`bookmark-button ${isBookmarked ? 'bookmarked' : ''} ${saving ? 'saving' : ''}`}
           onClick={handleBookmarkClick}
           onMouseEnter={() => !isLoggedIn && setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           disabled={saving}
-          aria-label={saved ? 'Bookmarked' : 'Save bookmark'}
+          aria-label={isBookmarked ? 'Remove bookmark' : 'Save bookmark'}
         >
           {saving ? (
             <span className="bookmark-spinner" aria-hidden="true" />
-          ) : saved ? (
+          ) : isBookmarked ? (
             <svg
               className="bookmark-icon"
               viewBox="0 0 24 24"
