@@ -116,6 +116,14 @@
   word-wrap: break-word;
 }
 
+/* Highlighted search term matches within chunk text */
+.chunk-text mark {
+  background-color: rgba(255, 230, 0, 0.35);
+  color: inherit;
+  border-radius: 2px;
+  padding: 0.05em 0.1em;
+}
+
 /* Light mode overrides */
 @media (prefers-color-scheme: light) {
   .episode-metadata {

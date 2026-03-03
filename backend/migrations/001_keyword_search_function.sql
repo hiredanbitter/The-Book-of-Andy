@@ -11,6 +11,7 @@ CREATE OR REPLACE FUNCTION keyword_search(
 RETURNS TABLE (
     chunk_id UUID,
     chunk_text TEXT,
+    highlighted_text TEXT,
     speaker_label TEXT,
     start_timestamp TEXT,
     end_timestamp TEXT,
@@ -30,6 +31,12 @@ BEGIN
         SELECT
             tc.id AS chunk_id,
             tc.chunk_text,
+            ts_headline(
+                'english',
+                tc.chunk_text,
+                plainto_tsquery('english', search_query),
+                'StartSel=<mark>, StopSel=</mark>, HighlightAll=true'
+            ) AS highlighted_text,
             tc.speaker_label,
             tc.start_timestamp,
             tc.end_timestamp,

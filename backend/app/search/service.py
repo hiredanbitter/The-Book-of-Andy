@@ -152,6 +152,7 @@ def keyword_search(
             SearchResult(
                 chunk_id=row["chunk_id"],
                 chunk_text=row["chunk_text"],
+                highlighted_text=row.get("highlighted_text"),
                 speaker_label=row["speaker_label"],
                 start_timestamp=row["start_timestamp"],
                 end_timestamp=row["end_timestamp"],

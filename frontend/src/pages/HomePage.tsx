@@ -92,6 +92,8 @@ export function HomePage() {
               <SearchResultCard
                 key={result.chunk_id}
                 result={result}
+                searchQuery={query}
+                searchMode={mode}
                 isLoggedIn={isLoggedIn}
                 isBookmarked={bookmarkedChunkIds.has(result.chunk_id)}
                 onBookmark={saveBookmark}

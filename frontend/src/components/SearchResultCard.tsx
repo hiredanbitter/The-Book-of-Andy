@@ -1,9 +1,14 @@
-import { useState } from 'react'
-import type { SearchResult } from '../types/search'
+import { useMemo, useState } from 'react'
+import type { SearchMode, SearchResult } from '../types/search'
+import { highlightSemanticMatches, sanitizeHighlightedHtml } from '../lib/highlightText'
 import './SearchResultCard.css'
 
 interface SearchResultCardProps {
   result: SearchResult
+  /** The current search query text (used for semantic highlighting). */
+  searchQuery: string
+  /** The current search mode. */
+  searchMode: SearchMode
   /** Whether the current user is authenticated. */
   isLoggedIn: boolean
   /** Whether this chunk is already bookmarked by the current user. */
@@ -38,19 +43,67 @@ function formatDate(dateStr: string | null): string {
  * chunk highlighted.  The chunk_id is passed as a query parameter so the
  * transcript page can scroll to it on load.
  */
-function buildTranscriptUrl(result: SearchResult): string {
-  return `/episodes/${result.episode_id}/transcript?chunk=${result.chunk_id}`
+function buildTranscriptUrl(
+  result: SearchResult,
+  searchQuery: string,
+  searchMode: SearchMode,
+): string {
+  const params = new URLSearchParams({
+    chunk: result.chunk_id,
+    q: searchQuery,
+    mode: searchMode,
+  })
+  return `/episodes/${result.episode_id}/transcript?${params.toString()}`
+}
+
+/**
+ * Renders the matching chunk text with search term highlighting.
+ *
+ * - Keyword search: uses pre-highlighted HTML from the backend (ts_headline).
+ * - Semantic search: highlights query words client-side.
+ */
+function HighlightedMatchText({
+  result,
+  searchQuery,
+  searchMode,
+}: {
+  result: SearchResult
+  searchQuery: string
+  searchMode: SearchMode
+}) {
+  const highlightedHtml = useMemo(() => {
+    if (searchMode === 'keyword' && result.highlighted_text) {
+      return sanitizeHighlightedHtml(result.highlighted_text)
+    }
+    if (searchMode === 'semantic' && searchQuery) {
+      return highlightSemanticMatches(result.chunk_text, searchQuery)
+    }
+    return null
+  }, [searchMode, result.highlighted_text, result.chunk_text, searchQuery])
+
+  if (highlightedHtml) {
+    return (
+      <p
+        className="match-text"
+        dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+      />
+    )
+  }
+
+  return <p className="match-text">{result.chunk_text}</p>
 }
 
 export function SearchResultCard({
   result,
+  searchQuery,
+  searchMode,
   isLoggedIn,
   isBookmarked,
   onBookmark,
   onRemoveBookmark,
   onBookmarkRemoved,
 }: SearchResultCardProps) {
-  const transcriptUrl = buildTranscriptUrl(result)
+  const transcriptUrl = buildTranscriptUrl(result, searchQuery, searchMode)
   const [saving, setSaving] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [showTooltip, setShowTooltip] = useState(false)
@@ -157,7 +210,11 @@ export function SearchResultCard({
 
       {/* ---- Matching chunk (highlighted) ---- */}
       <div className="match-chunk">
-        <p className="match-text">{result.chunk_text}</p>
+        <HighlightedMatchText
+          result={result}
+          searchQuery={searchQuery}
+          searchMode={searchMode}
+        />
       </div>
 
       {/* ---- Context after ---- */}

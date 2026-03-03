@@ -84,6 +84,7 @@ class TestKeywordSearchEndpoint:
             {
                 "chunk_id": "abc-123",
                 "chunk_text": "This is about burnout and stress",
+                "highlighted_text": "This is about <mark>burnout</mark> and stress",
                 "speaker_label": "SPEAKER_01",
                 "start_timestamp": "0:05:00",
                 "end_timestamp": "0:05:30",
@@ -121,6 +122,8 @@ class TestKeywordSearchEndpoint:
         result = data["results"][0]
         assert result["chunk_id"] == "abc-123"
         assert result["chunk_text"] == "This is about burnout and stress"
+        expected_hl = "This is about <mark>burnout</mark> and stress"
+        assert result["highlighted_text"] == expected_hl
         assert result["speaker_label"] == "SPEAKER_01"
         assert result["start_timestamp"] == "0:05:00"
         assert result["end_timestamp"] == "0:05:30"
