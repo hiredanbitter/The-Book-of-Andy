@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { SearchBar } from '../components/SearchBar'
 import { SearchResultCard } from '../components/SearchResultCard'
+import { ScrollToTop } from '../components/ScrollToTop'
 import { Pagination } from '../components/Pagination'
 import { Toast } from '../components/Toast'
 import { useSearch } from '../hooks/useSearch'
@@ -129,6 +130,8 @@ export function HomePage() {
           onDismiss={handleToastDismiss}
         />
       )}
+
+      <ScrollToTop />
     </div>
   )
 }

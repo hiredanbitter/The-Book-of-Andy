@@ -1,0 +1,41 @@
+.scroll-to-top {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+  background: #2a2a2e;
+  color: #ccc;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: color 0.15s, background-color 0.15s, opacity 0.2s;
+  z-index: 900;
+  animation: scroll-top-fade-in 0.2s ease-out;
+}
+
+@keyframes scroll-top-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.scroll-to-top:hover {
+  background: #3a3a3e;
+  color: #fff;
+}
+
+.scroll-to-top svg {
+  width: 20px;
+  height: 20px;
+}
