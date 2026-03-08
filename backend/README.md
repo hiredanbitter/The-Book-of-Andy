@@ -55,6 +55,8 @@ poetry run python -m app.ingestion.ingest_transcript <episode_id> <transcript_fi
 
 Required environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`.
 
+> **Note:** Authenticated endpoints verify JWTs using the public JWKS endpoint at `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` (ES256). No additional secret is required — the signing key is fetched and cached automatically.
+
 ## Linting
 
 This project uses [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
