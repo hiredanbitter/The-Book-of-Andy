@@ -53,7 +53,9 @@ poetry run python -m app.ingestion.ingest_transcript <episode_id> <transcript_fi
 poetry run python -m app.ingestion.ingest_transcript <episode_id> <transcript_file_path> --chunk-size 10
 ```
 
-Required environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET`, `OPENAI_API_KEY`.
+Required environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`.
+
+> **Note:** Authenticated endpoints verify JWTs using the public JWKS endpoint at `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` (ES256). No additional secret is required — the signing key is fetched and cached automatically.
 
 ## Linting
 

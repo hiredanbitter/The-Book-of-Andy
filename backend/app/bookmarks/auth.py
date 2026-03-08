@@ -1,7 +1,9 @@
 """Authentication dependency for bookmark endpoints.
 
-Verifies the Supabase JWT locally using the JWT secret and extracts
-the authenticated user's ID from the token claims — no network call required.
+Verifies the Supabase JWT locally using the project's public JWKS endpoint
+(ES256) and extracts the authenticated user's ID from the token claims.
+The JWKS response is cached so that the public key is fetched at most once
+per ``JWKS_CACHE_TTL`` seconds, avoiding a network call on every request.
 """
 
 import os
@@ -9,18 +11,34 @@ import os
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jwt import PyJWKClient
 
 security = HTTPBearer()
 
+# Default cache lifetime in seconds (5 minutes).
+JWKS_CACHE_TTL = 300
 
-def _get_jwt_secret() -> str:
-    """Return the Supabase JWT secret from environment variables."""
-    secret = os.environ.get("SUPABASE_JWT_SECRET")
-    if not secret:
-        raise RuntimeError(
-            "SUPABASE_JWT_SECRET environment variable must be set."
-        )
-    return secret
+_jwks_client: PyJWKClient | None = None
+
+
+def _get_jwks_client() -> PyJWKClient:
+    """Return a cached ``PyJWKClient`` for the Supabase JWKS endpoint.
+
+    The client is created lazily on first call and reused thereafter.
+    ``PyJWKClient`` handles internal caching of the fetched key set;
+    we set its ``lifespan`` to ``JWKS_CACHE_TTL`` so the keys are
+    re-fetched only after that interval elapses.
+    """
+    global _jwks_client  # noqa: PLW0603
+    if _jwks_client is None:
+        url = os.environ.get("SUPABASE_URL", "")
+        if not url:
+            raise RuntimeError(
+                "SUPABASE_URL environment variable must be set."
+            )
+        jwks_url = f"{url.rstrip('/')}/auth/v1/.well-known/jwks.json"
+        _jwks_client = PyJWKClient(jwks_url, cache_keys=True, lifespan=JWKS_CACHE_TTL)
+    return _jwks_client
 
 
 def get_current_user_id(
@@ -28,8 +46,9 @@ def get_current_user_id(
 ) -> str:
     """Extract and verify the user ID from a Supabase JWT.
 
-    Decodes and verifies the token locally using the Supabase JWT secret.
-    Returns the user's UUID string from the ``sub`` claim.
+    Fetches the signing key from the Supabase JWKS endpoint (cached),
+    then decodes the token with ES256. Returns the user's UUID string
+    from the ``sub`` claim.
 
     Raises
     ------
@@ -37,13 +56,14 @@ def get_current_user_id(
         If the token is missing, invalid, or expired.
     """
     token = credentials.credentials
-    secret = _get_jwt_secret()
 
     try:
+        jwks_client = _get_jwks_client()
+        signing_key = jwks_client.get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            secret,
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["ES256"],
             audience="authenticated",
         )
     except jwt.ExpiredSignatureError as exc:

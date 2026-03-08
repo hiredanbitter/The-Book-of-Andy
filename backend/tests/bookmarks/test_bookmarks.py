@@ -4,8 +4,10 @@ import time
 from unittest.mock import MagicMock, patch
 
 import jwt
+from cryptography.hazmat.primitives.asymmetric import ec
 from fastapi.testclient import TestClient
 
+import app.bookmarks.auth as auth_module
 from app.main import app
 
 client = TestClient(app)
@@ -15,15 +17,19 @@ MOCK_USER_ID = "user-abc-123"
 MOCK_OTHER_USER_ID = "user-xyz-789"
 MOCK_CHUNK_ID = "chunk-001"
 MOCK_BOOKMARK_ID = "bm-001"
-TEST_JWT_SECRET = "test-jwt-secret-for-unit-tests"
+
+# Generate a fresh EC P-256 key pair for test token signing/verification.
+_TEST_EC_PRIVATE_KEY = ec.generate_private_key(ec.SECP256R1())
+_TEST_EC_PUBLIC_KEY = _TEST_EC_PRIVATE_KEY.public_key()
 
 
 def _make_token(
     user_id: str = MOCK_USER_ID,
     expired: bool = False,
     audience: str = "authenticated",
+    private_key: ec.EllipticCurvePrivateKey | None = None,
 ) -> str:
-    """Create a signed JWT for testing."""
+    """Create an ES256-signed JWT for testing."""
     now = int(time.time())
     payload = {
         "sub": user_id,
@@ -31,13 +37,30 @@ def _make_token(
         "iat": now,
         "exp": now - 10 if expired else now + 3600,
     }
-    return jwt.encode(payload, TEST_JWT_SECRET, algorithm="HS256")
+    key = private_key or _TEST_EC_PRIVATE_KEY
+    return jwt.encode(payload, key, algorithm="ES256", headers={"kid": "test-kid"})
 
 
 def _auth_header(user_id: str = MOCK_USER_ID) -> dict[str, str]:
     """Return an Authorization header with a valid test JWT."""
     token = _make_token(user_id=user_id)
     return {"Authorization": f"Bearer {token}"}
+
+
+def _mock_jwks_client() -> MagicMock:
+    """Return a mock PyJWKClient whose signing key uses the test EC public key."""
+    mock_client = MagicMock()
+    mock_signing_key = MagicMock()
+    mock_signing_key.key = _TEST_EC_PUBLIC_KEY
+    mock_client.get_signing_key_from_jwt.return_value = mock_signing_key
+    return mock_client
+
+
+def _patch_jwks():
+    """Return a patch that replaces _get_jwks_client with a mock."""
+    return patch.object(
+        auth_module, "_get_jwks_client", return_value=_mock_jwks_client()
+    )
 
 
 def _mock_chunk_with_episode() -> list[dict]:
@@ -96,34 +119,28 @@ class TestUnauthenticatedAccess:
 class TestInvalidTokens:
     """Endpoints should return 401 for expired or tampered tokens."""
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
-    def test_expired_token_returns_401(self, _mock_secret):
+    def test_expired_token_returns_401(self):
         """An expired JWT is rejected with 401."""
         token = _make_token(expired=True)
-        response = client.get(
-            "/bookmarks",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+        with _patch_jwks():
+            response = client.get(
+                "/bookmarks",
+                headers={"Authorization": f"Bearer {token}"},
+            )
         assert response.status_code == 401
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
-    def test_tampered_token_returns_401(self, _mock_secret):
-        """A token signed with a different secret is rejected with 401."""
-        payload = {
-            "sub": MOCK_USER_ID,
-            "aud": "authenticated",
-            "iat": int(time.time()),
-            "exp": int(time.time()) + 3600,
-        }
-        bad_token = jwt.encode(payload, "wrong-secret", algorithm="HS256")
-        response = client.get(
-            "/bookmarks",
-            headers={"Authorization": f"Bearer {bad_token}"},
-        )
+    def test_tampered_token_returns_401(self):
+        """A token signed with a different key is rejected with 401."""
+        other_key = ec.generate_private_key(ec.SECP256R1())
+        bad_token = _make_token(private_key=other_key)
+        with _patch_jwks():
+            response = client.get(
+                "/bookmarks",
+                headers={"Authorization": f"Bearer {bad_token}"},
+            )
         assert response.status_code == 401
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
-    def test_token_missing_sub_returns_401(self, _mock_secret):
+    def test_token_missing_sub_returns_401(self):
         """A token without a 'sub' claim is rejected with 401."""
         now = int(time.time())
         payload = {
@@ -131,11 +148,15 @@ class TestInvalidTokens:
             "iat": now,
             "exp": now + 3600,
         }
-        token = jwt.encode(payload, TEST_JWT_SECRET, algorithm="HS256")
-        response = client.get(
-            "/bookmarks",
-            headers={"Authorization": f"Bearer {token}"},
+        token = jwt.encode(
+            payload, _TEST_EC_PRIVATE_KEY, algorithm="ES256",
+            headers={"kid": "test-kid"},
         )
+        with _patch_jwks():
+            response = client.get(
+                "/bookmarks",
+                headers={"Authorization": f"Bearer {token}"},
+            )
         assert response.status_code == 401
 
 
@@ -147,10 +168,9 @@ class TestInvalidTokens:
 class TestCreateBookmark:
     """Tests for the POST /bookmarks endpoint."""
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_create_bookmark_success(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """Authenticated user with < 100 bookmarks can create a bookmark."""
         # Mock service client
@@ -203,11 +223,12 @@ class TestCreateBookmark:
 
         mock_svc.table.side_effect = table_side_effect
 
-        response = client.post(
-            "/bookmarks",
-            json={"chunk_id": MOCK_CHUNK_ID},
-            headers=_auth_header(),
-        )
+        with _patch_jwks():
+            response = client.post(
+                "/bookmarks",
+                json={"chunk_id": MOCK_CHUNK_ID},
+                headers=_auth_header(),
+            )
         assert response.status_code == 201
         data = response.json()
         assert data["bookmark_id"] == MOCK_BOOKMARK_ID
@@ -219,10 +240,9 @@ class TestCreateBookmark:
         assert data["podcast_name"] == "Test Podcast"
         assert data["created_at"] == "2025-06-01T12:00:00Z"
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_create_bookmark_limit_reached(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """User with 100 bookmarks gets a 400 error."""
         # Mock service client
@@ -236,20 +256,21 @@ class TestCreateBookmark:
 
         mock_svc.table.return_value.select.return_value = mock_count_select
 
-        response = client.post(
-            "/bookmarks",
-            json={"chunk_id": MOCK_CHUNK_ID},
-            headers=_auth_header(),
-        )
+        with _patch_jwks():
+            response = client.post(
+                "/bookmarks",
+                json={"chunk_id": MOCK_CHUNK_ID},
+                headers=_auth_header(),
+            )
         assert response.status_code == 400
         assert "limit" in response.json()["detail"].lower()
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
-    def test_create_bookmark_missing_chunk_id(self, _mock_secret):
+    def test_create_bookmark_missing_chunk_id(self):
         """POST /bookmarks without chunk_id returns 422."""
-        response = client.post(
-            "/bookmarks", json={}, headers=_auth_header()
-        )
+        with _patch_jwks():
+            response = client.post(
+                "/bookmarks", json={}, headers=_auth_header()
+            )
         assert response.status_code == 422
 
 
@@ -261,10 +282,9 @@ class TestCreateBookmark:
 class TestListBookmarks:
     """Tests for the GET /bookmarks endpoint."""
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_list_bookmarks_returns_data(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """Authenticated user gets their bookmarks with metadata."""
         # Mock service client
@@ -302,7 +322,8 @@ class TestListBookmarks:
         mock_select.execute.return_value = MagicMock(data=bookmark_data)
         mock_svc.table.return_value.select.return_value = mock_select
 
-        response = client.get("/bookmarks", headers=_auth_header())
+        with _patch_jwks():
+            response = client.get("/bookmarks", headers=_auth_header())
         assert response.status_code == 200
         data = response.json()
         assert len(data["bookmarks"]) == 1
@@ -313,10 +334,9 @@ class TestListBookmarks:
         assert bm["episode_title"] == "Episode One"
         assert bm["podcast_name"] == "Test Podcast"
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_list_bookmarks_empty(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """User with no bookmarks gets an empty list."""
         # Mock service client
@@ -329,7 +349,8 @@ class TestListBookmarks:
         mock_select.execute.return_value = MagicMock(data=[])
         mock_svc.table.return_value.select.return_value = mock_select
 
-        response = client.get("/bookmarks", headers=_auth_header())
+        with _patch_jwks():
+            response = client.get("/bookmarks", headers=_auth_header())
         assert response.status_code == 200
         data = response.json()
         assert data["bookmarks"] == []
@@ -343,10 +364,9 @@ class TestListBookmarks:
 class TestDeleteBookmark:
     """Tests for the DELETE /bookmarks/:id endpoint."""
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_delete_own_bookmark(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """Authenticated user can delete their own bookmark."""
         # Mock service client
@@ -377,16 +397,16 @@ class TestDeleteBookmark:
 
         mock_svc.table.side_effect = table_side_effect
 
-        response = client.delete(
-            f"/bookmarks/{MOCK_BOOKMARK_ID}", headers=_auth_header()
-        )
+        with _patch_jwks():
+            response = client.delete(
+                f"/bookmarks/{MOCK_BOOKMARK_ID}", headers=_auth_header()
+            )
         assert response.status_code == 200
         assert "deleted" in response.json()["detail"].lower()
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_delete_other_users_bookmark_returns_403(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """Deleting another user's bookmark returns 403."""
         # Mock service client
@@ -401,15 +421,15 @@ class TestDeleteBookmark:
         )
         mock_svc.table.return_value.select.return_value = mock_select
 
-        response = client.delete(
-            f"/bookmarks/{MOCK_BOOKMARK_ID}", headers=_auth_header()
-        )
+        with _patch_jwks():
+            response = client.delete(
+                f"/bookmarks/{MOCK_BOOKMARK_ID}", headers=_auth_header()
+            )
         assert response.status_code == 403
 
-    @patch("app.bookmarks.auth._get_jwt_secret", return_value=TEST_JWT_SECRET)
     @patch("app.bookmarks.service._get_supabase_client")
     def test_delete_nonexistent_bookmark_returns_404(
-        self, mock_service_client, _mock_secret
+        self, mock_service_client
     ):
         """Deleting a bookmark that doesn't exist returns 404."""
         # Mock service client
@@ -422,7 +442,8 @@ class TestDeleteBookmark:
         mock_select.execute.return_value = MagicMock(data=[])
         mock_svc.table.return_value.select.return_value = mock_select
 
-        response = client.delete(
-            "/bookmarks/nonexistent-id", headers=_auth_header()
-        )
+        with _patch_jwks():
+            response = client.delete(
+                "/bookmarks/nonexistent-id", headers=_auth_header()
+            )
         assert response.status_code == 404
