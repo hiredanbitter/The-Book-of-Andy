@@ -58,6 +58,16 @@ poetry run python -m app.ingestion.ingest_transcript <episode_id> <transcript_fi
 
 Required environment variables: `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `OPENAI_API_KEY`.
 
+## CORS Configuration
+
+By default, the backend only allows requests from `http://localhost:5173` (the local Vite dev server). To allow additional origins (e.g. a production frontend), set the `CORS_ALLOWED_ORIGINS` environment variable to a comma-separated list of URLs:
+
+```bash
+CORS_ALLOWED_ORIGINS=http://localhost:5173,https://your-production-domain.com
+```
+
+If `CORS_ALLOWED_ORIGINS` is not set, only `http://localhost:5173` is allowed. See `backend/.env.example` for a template.
+
 > **Note:** Authenticated endpoints verify JWTs using the public JWKS endpoint at `{SUPABASE_URL}/auth/v1/.well-known/jwks.json` (ES256). No additional secret is required — the signing key is fetched and cached automatically.
 
 ## Linting
@@ -78,5 +88,5 @@ Ruff is configured in `pyproject.toml` under `[tool.ruff]`.
 
 - **FastAPI** was chosen for its async support, automatic OpenAPI docs, and strong typing with Pydantic.
 - **Poetry** is used for dependency management to ensure reproducible installs.
-- **CORS** is configured to allow all origins during development. This will be tightened for production.
+- **CORS** is configured via the `CORS_ALLOWED_ORIGINS` environment variable, defaulting to `http://localhost:5173` for local development.
 - Environment variables are loaded from a `.env` file using `python-dotenv`.
