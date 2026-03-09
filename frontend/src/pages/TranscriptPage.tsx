@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { API_BASE_URL } from '../config'
 import { highlightSemanticMatches } from '../lib/highlightText'
 import './TranscriptPage.css'
 
@@ -25,8 +26,6 @@ interface TranscriptResponse {
   episode: EpisodeMetadata
   chunks: TranscriptChunk[]
 }
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL as string || 'http://localhost:8000'
 
 /**
  * Renders chunk text with optional search term highlighting.
