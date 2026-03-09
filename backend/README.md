@@ -84,6 +84,16 @@ poetry run ruff format .
 
 Ruff is configured in `pyproject.toml` under `[tool.ruff]`.
 
+## Railway Deployment
+
+The `Procfile` and `requirements.txt` in this directory are used by Railway to build and start the backend service.
+
+- **`requirements.txt`** is auto-generated from `pyproject.toml` via `poetry export` and **should not be edited manually**. Poetry remains the source of truth for dependencies in local development. Regenerate it whenever dependencies change:
+  ```bash
+  poetry export -f requirements.txt --output requirements.txt --without-hashes
+  ```
+- **`Procfile`** tells Railway how to start the application. It should not need to change unless the app entrypoint changes.
+
 ## Implementation Decisions
 
 - **FastAPI** was chosen for its async support, automatic OpenAPI docs, and strong typing with Pydantic.
