@@ -29,28 +29,6 @@ def _get_supabase_client() -> Client:
     return create_client(url, key)
 
 
-def get_bookmark_count(user_id: str) -> int:
-    """Return the number of bookmarks for a given user.
-
-    Parameters
-    ----------
-    user_id:
-        UUID of the authenticated user.
-
-    Returns
-    -------
-    int
-        Current bookmark count.
-    """
-    client = _get_supabase_client()
-    result = (
-        client.table("bookmarks")
-        .select("id", count="exact")
-        .eq("user_id", user_id)
-        .execute()
-    )
-    return result.count if result.count is not None else 0
-
 
 class BookmarkLimitReachedError(Exception):
     """Raised when a user has reached the maximum number of bookmarks."""
