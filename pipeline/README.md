@@ -28,6 +28,5 @@ pipeline/
     ingest.py
   scheduler/
     __init__.py
-  requirements.txt
   README.md
 ```
